@@ -43,7 +43,7 @@
       pinataGateway
     });
 
-    async function* uploadFilesSequentially(files) {
+    async function* uploadFilesToIPFS(files) {
       for (const file of files) {
         try {
           const result = await pinata.upload.public.file(file);
@@ -73,7 +73,7 @@
         resultsDiv.appendChild(div);
       }
 
-      for await (const outcome of uploadFilesSequentially(files)) {
+      for await (const outcome of uploadFilesToIPFS(files)) {
         const div = document.getElementById(`file-${outcome.name}`);
         if (outcome.success) {
           div.className = "result-item success";
