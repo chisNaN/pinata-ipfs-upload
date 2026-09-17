@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upload multiple fichiers vers IPFS - Pinata</title>
+
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    #results {
+      margin-top: 20px;
+    }
+    .result-item {
+      padding: 8px;
+      margin: 4px 0;
+      border-radius: 4px;
+    }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .pending { background: #fff3cd; color: #856404; }
+  </style>
+</head>
+<body>
+  <h1>Upload de fichiers vers IPFS</h1>
+
+  <input type="file" id="fileInput" multiple />
+  <button id="uploadBtn">Uploader</button>
+
+  <div id="results"></div>
+
+  <!-- IMPORTANT : type="module" + import ESM depuis un CDN qui sait bundler pour le navigateur -->
+  <script type="module">
+    import { PinataSDK } from "https://esm.sh/pinata";
+
+    // ⚠️ Ne jamais exposer un JWT admin côté client en production.
+    const pinata = new PinataSDK({
+      pinataJwt: "jwttoken",
+      pinataGateway: "mypinata.cloud",
+    });
+
+    async function* uploadFilesSequentially(files) {
+      for (const file of files) {
+        try {
+          const result = await pinata.upload.public.file(file);
+          yield { success: true, name: file.name, result };
+        } catch (error) {
+          yield { success: false, name: file.name, error: error.message };
+        }
+      }
+    }
+
+    document.getElementById("uploadBtn").addEventListener("click", async () => {
+      const input = document.getElementById("fileInput");
+      const files = Array.from(input.files);
+      const resultsDiv = document.getElementById("results");
+      resultsDiv.innerHTML = "";
+
+      if (files.length === 0) {
+        resultsDiv.innerHTML = "<p>Sélectionne au moins un fichier.</p>";
+        return;
+      }
+
+      for (const file of files) {
+        const div = document.createElement("div");
+        div.className = "result-item pending";
+        div.id = `file-${file.name}`;
+        div.textContent = `⏳ ${file.name} - en cours...`;
+        resultsDiv.appendChild(div);
+      }
+
+      for await (const outcome of uploadFilesSequentially(files)) {
+        const div = document.getElementById(`file-${outcome.name}`);
+        if (outcome.success) {
+          div.className = "result-item success";
+          div.textContent = `✅ ${outcome.name} - CID: ${outcome.result.cid}`;
+        } else {
+          div.className = "result-item error";
+          div.textContent = `❌ ${outcome.name} - ${outcome.error}`;
+        }
+      }
+    });
+  </script>
+</body>
+</html>
