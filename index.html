@@ -58,8 +58,8 @@
       const data = new FormData(e.target);
       const resultsDiv = document.getElementById("results");
       resultsDiv.innerHTML = "";
-      const files = data.getAll('files');
-      if (files[0].size === 0) {
+      const files = data.getAll('files').filter(f => f.size > 0);
+      if (files.length === 0) {
         resultsDiv.innerHTML = "<p>Sélectionne au moins un fichier.</p>";
         return;
       }
