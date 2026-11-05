@@ -72,9 +72,12 @@
         resultsDiv.appendChild(div);
       }
 
+      const allCids = []
+
       for await (const outcome of uploadFilesToIPFS(files)) {
         const div = document.getElementById(`file-${outcome.name}`);
         if (outcome.success) {
+          allCids.push(outcome.result.cid)
           div.className = "result-item success";
           div.innerHTML = `✅ <a target="_blank" href="https://${pinataGateway}/ipfs/${outcome.result.cid}">${outcome.name}</a> - CID: ${outcome.result.cid}`;
         } else {
@@ -82,7 +85,7 @@
           div.innerHTML = `❌ ${outcome.name} - ${outcome.error}`;
         }
       }
-
+     console.log('allCids', allCids) 
     });
   </script>
 </body>
